@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Marathi NLP — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={theme:{extend:{colors:{ink:"#0f172a",panel:"#ffffff",line:"rgba(15,23,42,.09)",accent:"#2563eb",accent2:"#0284c7"},fontFamily:{sans:["Inter","Noto Sans","system-ui"],mono:["JetBrains Mono","monospace"]}}}}</script>
+<style>
+body{margin:0;font-family:Inter,"Noto Sans",system-ui;color:#0f172a;background:#f1f5f9;}
+.bg-scene{background:radial-gradient(900px 480px at 15% -5%,rgba(37,99,235,.10),transparent 60%),radial-gradient(800px 420px at 90% 0%,rgba(2,132,199,.10),transparent 60%),radial-gradient(700px 500px at 50% 110%,rgba(37,99,235,.07),transparent 60%),#f1f5f9;}
+.glass{background:rgba(255,255,255,.86);backdrop-filter:blur(14px);border:1px solid rgba(15,23,42,.08);box-shadow:0 8px 24px rgba(15,23,42,.06);}
+.card{background:#ffffff;border:1px solid rgba(15,23,42,.09);border-radius:1rem;box-shadow:0 10px 28px rgba(15,23,42,.07);transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease;}
+.card:hover{transform:translateY(-2px);border-color:rgba(37,99,235,.4);box-shadow:0 16px 40px rgba(37,99,235,.14);}
+.grad-text{background:linear-gradient(90deg,#1e3a8a,#2563eb 55%,#0284c7);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.btn-primary{background:linear-gradient(135deg,#2563eb,#0284c7);color:#ffffff;font-weight:700;box-shadow:0 8px 24px rgba(37,99,235,.35);transition:.2s;}
+.btn-primary:hover{filter:brightness(1.07);transform:translateY(-1px);}
+.btn-primary:disabled{opacity:.7;filter:saturate(.7);}
+.btn-ghost{background:#eff6ff;border:1px solid #bfdbfe;transition:.2s;}
+.btn-ghost:hover{background:#dbeafe;}
+.navlink{display:flex;align-items:center;gap:.6rem;padding:.6rem .8rem;border-radius:.7rem;color:#475569;font-size:.9rem;transition:.18s;border:1px solid transparent;}
+.navlink:hover{color:#1d4ed8;background:#eff6ff;}
+.pill{font-size:.68rem;padding:.25rem .6rem;border-radius:999px;background:#dbeafe;border:1px solid #93c5fd;color:#1d4ed8;}
+.dot{width:.55rem;height:.55rem;border-radius:999px;background:#34d399;box-shadow:0 0 0 0 rgba(52,211,153,.6);animation:pulse 1.8s infinite;}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(52,211,153,.55)}70%{box-shadow:0 0 0 9px rgba(52,211,153,0)}100%{box-shadow:0 0 0 0 rgba(52,211,153,0)}}
+.dropzone{border:1.5px dashed #93c5fd;background:radial-gradient(400px 160px at 50% 0%,rgba(37,99,235,.08),transparent 70%);transition:.2s;}
+.dropzone:hover{border-color:#2563eb;background:rgba(37,99,235,.05);}
+table.cool th{font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:#64748b;font-weight:600;background:#f8fafc;}
+table.cool td,table.cool th{padding:.7rem .9rem;border-bottom:1px solid #e2e8f0;}
+table.cool td{color:#334155;}
+.bar-track{background:#e2e8f0;border-radius:999px;overflow:hidden;}
+ #live-intent-bar{background:linear-gradient(90deg,#2563eb,#0284c7);transition:width .6s ease;}
+ .tok-chip{display:inline-block;padding:.15rem .55rem;border-radius:999px;background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af;font-size:.72rem;font-family:"JetBrains Mono",monospace;white-space:nowrap;}
+ .ent-pill{display:inline-block;padding:.1rem .55rem;border-radius:999px;font-size:.7rem;font-weight:600;border:1px solid;}
+ .ent-DATE{color:#0e7490;border-color:#67e8f9;background:#ecfeff;}
+ .ent-MONEY{color:#15803d;border-color:#86efac;background:#f0fdf4;}
+ .ent-SECTION{color:#b45309;border-color:#fcd34d;background:#fffbeb;}
+ .ent-CASE_NUMBER{color:#be185d;border-color:#f9a8d4;background:#fdf2f8;}
+ .ent-ORGANIZATION{color:#6d28d9;border-color:#c4b5fd;background:#f5f3ff;}
+ .ent-PERSON{color:#c2410c;border-color:#fdba74;background:#fff7ed;}
+ #analyze-progress-bar{position:relative;overflow:hidden;}
+ #analyze-progress-bar::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent);animation:shimmer 1.4s infinite;}
+ @keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+input,select,textarea{color-scheme:light;}
+input::placeholder,textarea::placeholder{color:#94a3b8;}
+::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:999px}::-webkit-scrollbar-track{background:transparent}
+main{max-width:78rem;margin:0 auto;padding:5.5rem 1.5rem 3rem;}
+</style>
+</head>
+<body class="bg-scene">
+<aside class="fixed left-0 top-0 h-full w-64 glass z-50 flex flex-col">
+<div class="p-5">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg" style="background:linear-gradient(135deg,#2563eb,#0284c7);color:#ffffff">म</div>
+<div><div class="font-bold tracking-tight">MarathiNLP</div><div class="text-[11px] text-slate-500 uppercase tracking-widest">Legal &amp; Financial AI</div></div>
+</div>
+<div class="mt-3 text-[11px] font-mono bg-sky-50 border border-slate-200 rounded-lg px-2 py-1 text-slate-600">Devanagari NLP <span class="float-right text-sky-700">v1.2</span></div>
+</div>
+<nav class="flex flex-col gap-1 px-4 text-sm">
+<a href="#/home" class="navlink"><span class="material-symbols-outlined text-[19px]">grid_view</span> Dashboard</a>
+<a href="#/analyzer" class="navlink"><span class="material-symbols-outlined text-[19px]">document_scanner</span> Document Analyzer</a>
+<a href="#/results" class="navlink"><span class="material-symbols-outlined text-[19px]">analytics</span> Analysis Results</a>
+<a href="#/dataset" class="navlink"><span class="material-symbols-outlined text-[19px]">bar_chart</span> Dataset Analytics</a>
+</nav>
+<div class="mt-auto p-5 text-xs text-slate-500"><div class="glass rounded-xl p-3 flex items-center gap-2"><span class="dot"></span><span>Backend: <span data-backend-status>checking…</span></span></div></div>
+</aside>
+
+<div class="pl-64">
+<header class="fixed top-0 left-64 right-0 h-16 glass z-40 flex items-center justify-between px-6">
+<span class="text-xs font-mono text-slate-600 flex items-center gap-2"><span class="dot"></span> FastAPI: <span data-backend-status>checking…</span></span>
+<div class="flex items-center gap-4 text-sm text-slate-600"><a href="#" class="hover:text-blue-700">API Docs</a><span class="pill">NLP Lab · live only</span><span class="pill" id="build-tag">build …</span></div>
+</header>
+
+<!-- HOME -->
+<main data-page="home">
+<div class="card p-7 flex flex-col xl:flex-row justify-between gap-6 relative overflow-hidden">
+<div class="absolute -top-24 -right-24 w-96 h-96 rounded-full pointer-events-none" style="background:radial-gradient(circle,rgba(109,124,255,.25),transparent 70%)"></div>
+<div class="max-w-2xl relative">
+<span class="pill">Devanagari NLP Pipeline v1.2</span>
+<span class="pill ml-2">FastAPI /api/v1/analyze</span>
+<h1 class="grad-text text-4xl font-extrabold mt-3 tracking-tight">Marathi Legal &amp; Financial Document Analysis</h1>
+<p class="text-slate-500 mt-3">Upload or paste Marathi documents — intent, entities, tokens and stats render live from the backend. Empty states stay empty until real data arrives.</p>
+<div class="flex flex-wrap gap-2 mt-5">
+<a href="#/analyzer" class="btn-primary px-5 py-2.5 rounded-xl text-sm">Analyze a Document</a>
+<a href="#/dataset" class="btn-ghost px-5 py-2.5 rounded-xl text-sm text-blue-700">Explore Dataset</a>
+<a href="#/results" class="px-4 py-2.5 text-sm text-sky-700 hover:text-blue-700">View Live Results →</a>
+</div></div>
+<div class="w-full xl:w-80 glass rounded-2xl p-4 relative">
+<div class="text-[11px] font-mono uppercase tracking-widest text-slate-500 flex justify-between"><span>Vector Space</span><span class="text-sky-700">TF-IDF + SVM</span></div>
+<div class="flex items-end gap-1.5 h-24 mt-3 px-1">
+<div class="flex-1 rounded-t" style="height:42%;background:#dbeafe"></div>
+<div class="flex-1 rounded-t" style="height:68%;background:#bfdbfe"></div>
+<div class="flex-1 rounded-t" style="height:85%;background:#60a5fa"></div>
+<div class="flex-1 rounded-t" style="height:55%;background:#dbeafe"></div>
+<div class="flex-1 rounded-t" style="height:94%;background:linear-gradient(180deg,#2563eb,#0284c7)"></div>
+<div class="flex-1 rounded-t" style="height:62%;background:#cbd5e1"></div>
+<div class="flex-1 rounded-t" style="height:78%;background:#38bdf8"></div>
+<div class="flex-1 rounded-t" style="height:91%;background:#3b82f6"></div>
+</div>
+<div class="text-xs mt-2 font-mono text-slate-600">Macro F1: <strong id="live-macro-f1" class="text-slate-900">—</strong> · <span id="live-model-f1">F1: — (no trained model)</span></div>
+</div></div>
+
+<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mt-4">
+<div class="card p-5"><div class="text-[11px] font-mono uppercase tracking-widest text-slate-500">Corpus · Documents</div><div class="text-3xl font-extrabold mt-1" id="stat-doc-count">—</div><div class="text-xs mt-1 text-slate-500"><span id="stat-legal">—</span> · <span id="stat-financial">—</span></div><div class="text-[11px] font-mono text-slate-500 mt-2">live · /api/v1/dataset/stats</div></div>
+<div class="card p-5"><div class="text-[11px] font-mono uppercase tracking-widest text-slate-500">Intent · Categories</div><div class="text-3xl font-extrabold mt-1">Live</div><div class="text-xs text-slate-500 mt-1">Labels only from model / dataset</div></div>
+<div class="card p-5"><div class="text-[11px] font-mono uppercase tracking-widest text-slate-500">NER · Entities</div><div class="text-3xl font-extrabold mt-1">Live</div><div class="text-xs text-slate-500 mt-1">Per-analysis counts only</div></div>
+<div class="card p-5"><div class="text-[11px] font-mono uppercase tracking-widest text-slate-500">Models · Metrics</div><div class="text-3xl font-extrabold mt-1">Live</div><div class="text-xs text-slate-500 mt-1">See /api/v1/model/metrics</div></div>
+</div>
+
+<div class="card p-6 mt-4">
+<h2 class="text-xl font-bold" id="pipeline">How It Works</h2>
+<p class="text-sm text-slate-500">Upload → Extract → Preprocess → Intent + NER → Export</p>
+<div class="grid grid-cols-1 md:grid-cols-5 gap-3 mt-4 text-sm">
+<div class="glass p-4 rounded-xl"><div class="text-sky-700 font-mono text-xs">01</div><b>Upload</b><p class="text-slate-500 text-xs mt-1">PDF / TXT / Word, backend size limit.</p></div>
+<div class="glass p-4 rounded-xl"><div class="text-sky-700 font-mono text-xs">02</div><b>Extract</b><p class="text-slate-500 text-xs mt-1">Text-based PDF &amp; TXT parser.</p></div>
+<div class="glass p-4 rounded-xl"><div class="text-sky-700 font-mono text-xs">03</div><b>Preprocess</b><p class="text-slate-500 text-xs mt-1">Normalization + stopwords.</p></div>
+<div class="glass p-4 rounded-xl"><div class="text-sky-700 font-mono text-xs">04</div><b>Intent + NER</b><p class="text-slate-500 text-xs mt-1">Live backend prediction.</p></div>
+<div class="glass p-4 rounded-xl" style="border-color:rgba(34,211,238,.4)"><div class="text-sky-700 font-mono text-xs">05</div><b>Export</b><p class="text-slate-500 text-xs mt-1">JSON / CSV download.</p></div>
+</div></div>
+
+<div class="mt-4"><h2 class="text-xl font-bold">Core Capabilities</h2>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
+<div class="card p-5"><h3 class="font-semibold">Intent Classification</h3><p class="text-sm text-slate-500">Live label + confidence. Empty until analysis.</p><div class="text-sm mt-3 font-mono">Current: <strong id="live-intent-name">—</strong> (<span id="live-intent-pct" class="text-sky-700">—</span>)</div></div>
+<div class="card p-5"><h3 class="font-semibold">Named Entity Recognition</h3><p class="text-sm text-slate-500">PERSON · COURT · LAW · SECTION · DATE · LOCATION · MONEY — live results only.</p></div>
+<div class="card p-5"><h3 class="font-semibold">Text Analytics</h3><p class="text-sm text-slate-500">Tokens, stats and dataset charts from live responses.</p></div>
+</div></div>
+
+<div class="card mt-4 overflow-hidden">
+<div class="p-5 flex justify-between items-center"><div><h2 class="font-bold" id="search">Recent Analyses</h2><p class="text-sm text-slate-500">This session only — starts empty</p></div><a href="#/analyzer" class="btn-primary px-4 py-2 rounded-xl text-sm">+ New Analysis</a></div>
+<table class="cool w-full text-sm text-left"><thead><tr><th>Document</th><th>Intent</th><th>Entities</th><th>Date</th><th>Status</th></tr></thead>
+<tbody id="history-table-body"><tr><td colspan="5" class="p-4 text-slate-500">No analyses yet — run one in the analyzer.</td></tr></tbody></table>
+</div></main>
+
+<!-- ANALYZER -->
+<main data-page="analyzer">
+<h1 class="grad-text text-3xl font-extrabold tracking-tight" id="analyzer">Document Analyzer</h1>
+<p class="text-slate-500">Upload a file or paste Marathi text. Everything is sent live to the backend.</p>
+<div class="card p-3 mt-4 flex flex-wrap gap-2 items-center">
+<button id="tab-upload-btn" class="btn-primary px-4 py-2 rounded-xl text-sm">Upload Document</button>
+<button id="tab-paste-btn" class="btn-ghost px-4 py-2 rounded-xl text-sm text-blue-700">Paste Text</button>
+<span class="ml-auto text-[11px] font-mono text-slate-500">multipart/form-data · JSON</span>
+</div>
+<div id="upload-panel" class="card mt-3 overflow-hidden">
+<div class="dropzone m-4 rounded-2xl p-10 text-center relative">
+<input id="file-uploader" type="file" accept=".pdf,.txt,.docx" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full"/>
+<div class="text-4xl">☁️</div>
+<h3 class="font-bold mt-2">Drag &amp; drop your document here</h3>
+<p class="text-sm text-slate-500">or browse files · PDF, TXT, Word (.docx) · UTF-8 Devanagari</p>
+</div>
+<div class="px-5 pb-5 text-sm flex items-center justify-between"><span>Staged: <strong id="staged-file-name">No file staged</strong> — <span id="staged-file-status" class="text-slate-500">Please choose a document</span></span><button id="clear-file-btn" type="button" class="text-xs underline text-slate-500">Clear file</button></div>
+</div>
+<div id="paste-panel" class="card p-5 mt-3" style="display:none">
+<textarea id="marathi-input-area" rows="8" class="w-full rounded-xl p-3 bg-slate-100 border border-slate-200 text-slate-900" placeholder="मराठी मजकूर येथे प्रविष्ट करा..."></textarea>
+<div class="text-xs font-mono text-slate-500 mt-2"><span id="char-counter">0 words</span> · UTF-8 Devanagari</div>
+</div>
+<div class="card p-6 mt-3 flex flex-col gap-3">
+<label class="text-sm">Model <select id="model-selector" class="ml-2 bg-slate-100 border border-slate-200 rounded-lg p-2 text-sm"><option value="auto">Auto — best available model</option></select></label>
+<label class="text-sm glass rounded-xl p-3 flex justify-between">Named Entity Extraction <input id="ner-toggle" type="checkbox" checked/></label>
+<label class="text-sm glass rounded-xl p-3 flex justify-between">Devanagari normalization (remove stopwords) <input id="preprocess-toggle" type="checkbox" checked/></label>
+ <button id="analyze-action-btn" class="btn-primary px-4 py-3 rounded-xl">⚡ Analyze Document</button>
+<div id="analyze-progress-wrap" class="mt-1" style="display:none">
+<div class="flex justify-between text-xs font-mono text-slate-500"><span id="analyze-progress-stage">Ready</span><span id="analyze-progress-pct">0%</span></div>
+<div class="bar-track h-2.5 mt-2"><div id="analyze-progress-bar" class="h-2.5 rounded-full" style="width:0%;background:linear-gradient(90deg,#2563eb,#0284c7);transition:width .3s ease"></div></div>
+</div>
+ </div></main>
+
+<!-- RESULTS -->
+<main data-page="results">
+<h1 class="grad-text text-3xl font-extrabold tracking-tight">Analysis Results</h1>
+<p class="text-slate-500">Filled only by live <code class="font-mono text-sky-700">POST /api/v1/analyze</code> responses.</p>
+<div class="card p-6 mt-4 relative overflow-hidden">
+<div class="absolute inset-x-0 top-0 h-1" style="background:linear-gradient(90deg,#2563eb,#0284c7)"></div>
+<div class="text-[11px] font-mono uppercase tracking-widest text-slate-500">Top label · <span id="live-intent-confidence" class="text-sky-700">awaiting analysis</span></div>
+<div class="text-2xl font-extrabold mt-1"><span id="live-intent-band">No prediction</span></div>
+<div class="bar-track h-2.5 mt-3"><div id="live-intent-bar" class="h-2.5 rounded-full" style="width:0%"></div></div>
+<p class="text-sm text-slate-500 mt-3" id="live-intent-notes">Run an analysis above to see the predicted intent, entities and warnings.</p>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+<div class="card p-4" id="tab-pane-original"><div class="flex items-center justify-between"><h3 class="font-semibold text-sm text-sky-700">📄 Original Text</h3><span id="original-count" class="pill">—</span></div><p class="text-sm text-slate-600 mt-2 leading-relaxed max-h-40 overflow-y-auto" id="original-text-body">Awaiting analysis</p><button id="original-toggle" class="text-xs text-sky-700 hover:text-blue-700 mt-2" style="display:none">Show more ▾</button></div>
+<div class="card p-4" id="tab-pane-cleaned"><div class="flex items-center justify-between"><h3 class="font-semibold text-sm text-sky-700">✨ Cleaned Text</h3><span id="cleaned-count" class="pill">—</span></div><p class="text-sm text-slate-600 mt-2 leading-relaxed max-h-40 overflow-y-auto" id="cleaned-text-body">Awaiting analysis</p><button id="cleaned-toggle" class="text-xs text-sky-700 hover:text-blue-700 mt-2" style="display:none">Show more ▾</button></div>
+<div class="card p-4" id="tab-pane-tokens"><div class="flex items-center justify-between"><h3 class="font-semibold text-sm text-sky-700">🔤 Tokens</h3><span id="tokens-count" class="pill">—</span></div><div class="flex flex-wrap gap-1.5 text-xs mt-2 max-h-40 overflow-y-auto" id="tokens-body">Awaiting analysis</div><button id="tokens-toggle" class="text-xs text-sky-700 hover:text-blue-700 mt-2" style="display:none">Show all ▾</button></div>
+<div class="card p-4" id="tab-pane-english"><div class="flex items-center justify-between"><h3 class="font-semibold text-sm text-sky-700">🌐 English Translation</h3><span id="english-count" class="pill">—</span></div><p class="text-sm text-slate-600 mt-2 leading-relaxed max-h-40 overflow-y-auto" id="english-text-body">Awaiting analysis</p><div class="flex gap-3 mt-2"><button id="english-toggle" class="text-xs text-sky-700 hover:text-blue-700" style="display:none">Show more ▾</button><button id="english-retry" class="text-xs text-sky-700 hover:text-blue-700 underline" style="display:none">↻ Retry translation</button></div></div>
+<div class="card p-4" id="tab-pane-statistics"><h3 class="font-semibold text-sm text-sky-700">Statistics</h3><div class="grid grid-cols-2 gap-2 mt-2"><div><div class="text-[11px] font-mono text-slate-500">WORDS</div><div class="font-headline-md font-bold text-lg">—</div></div><div><div class="text-[11px] font-mono text-slate-500">VOCAB</div><div class="font-headline-md font-bold text-lg">—</div></div><div><div class="text-[11px] font-mono text-slate-500">TTR</div><div class="font-headline-md font-bold text-lg">—</div></div><div><div class="text-[11px] font-mono text-slate-500">AVG/SENT</div><div class="font-headline-md font-bold text-lg">—</div></div></div></div>
+</div>
+<h3 class="mt-5 font-bold">Clauses <span class="text-xs font-mono text-slate-500">(paragraph-wise, live)</span></h3>
+<table class="cool w-full text-sm card mt-2"><thead><tr><th>#</th><th>Clause</th><th>Intent</th><th>Entities</th></tr></thead><tbody id="clause-table-body"><tr><td colspan="4" class="p-4 text-slate-500">No clauses yet.</td></tr></tbody></table>
+<h3 class="mt-5 font-bold">Entities <span class="text-xs font-mono text-slate-500">(live)</span></h3>
+<table class="cool w-full text-sm card mt-2"><thead><tr><th>Text</th><th>Label</th><th>Method</th></tr></thead><tbody id="entity-table-body"><tr><td colspan="3" class="p-4 text-slate-500">No entities yet.</td></tr></tbody></table>
+<div class="flex gap-2 mt-4"><button id="exportJsonBtn" class="btn-primary px-4 py-2 rounded-xl text-sm">Export JSON</button><button id="downloadPdfBtn" class="btn-ghost px-4 py-2 rounded-xl text-sm text-blue-700">Export CSV</button></div>
+</main>
+
+<!-- DATASET -->
+<main data-page="dataset">
+<h1 class="grad-text text-3xl font-extrabold tracking-tight" id="dataset">Dataset Analytics</h1>
+<p class="text-slate-500">Live from <code class="font-mono text-sky-700">GET /api/v1/dataset/stats</code>. Empty until a dataset is connected.</p>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+<div class="card p-5" id="live-intent-dist"><h3 class="font-semibold">Intent Distribution</h3><p class="text-sm text-slate-500">Loading…</p></div>
+<div class="card p-5" id="live-entity-dist"><h3 class="font-semibold">Named Entity Recognition (NER) Density</h3><p class="text-sm text-slate-500">Loading…</p></div>
+<div class="card p-5" id="live-length-dist"><h3 class="font-semibold">Length Distribution</h3><p class="text-sm text-slate-500">Loading…</p></div>
+<div class="card p-5" id="live-top-tokens"><h3 class="font-semibold">Top Lexical Tokens</h3><p class="text-sm text-slate-500">Loading…</p></div>
+<div class="card p-5" id="live-ngrams"><h3 class="font-semibold">N-Gram Collocations</h3><p class="text-sm text-slate-500">Loading…</p></div>
+<div class="card p-5" id="live-domain"><h3 class="font-semibold">Domain Ratio</h3><p class="text-sm text-slate-500">Loading…</p></div>
+</div>
+<div class="flex flex-wrap gap-2 mt-4"><input id="corpus-search" class="bg-slate-100 border border-slate-200 rounded-xl p-2.5 flex-1 text-slate-900" placeholder="Search records..."/><select id="filter-domain" class="bg-slate-100 border border-slate-200 rounded-xl p-2.5"><option value="all">All Domains</option></select><select id="filter-intent" class="bg-slate-100 border border-slate-200 rounded-xl p-2.5"><option value="all">All Intents</option></select></div>
+<table class="cool w-full text-sm card mt-3"><thead><tr><th>Text</th><th>Intent</th></tr></thead><tbody id="dataset-table-body"><tr><td colspan="2" class="p-4 text-slate-500">No dataset records available.</td></tr></tbody></table>
+</main>
+</div>
+<script src="nlp-integration.js"></script>
+</body>
+</html>

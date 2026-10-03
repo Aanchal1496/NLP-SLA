@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Secrets & local config
+.env
+*.pem
+*.key
+
+# Data, models, uploads (large / private / generated)
+data/raw/*
+!data/raw/.gitkeep
+models/*
+!models/.gitkeep
+*.csv
+*.xlsx
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
