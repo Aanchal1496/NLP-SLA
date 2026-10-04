@@ -4,6 +4,7 @@ from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, field_validator
 
 from app.services import ner as svc
+from app.services import ner_indicbert as ib_svc
 from app.services import ner_trained as trained_svc
 
 router = APIRouter()
@@ -54,21 +55,24 @@ def extract_entities_flat(payload: EntitiesRequest) -> EntitiesResponse:
 
 def _respond(payload: EntitiesRequest) -> EntitiesResponse:
     try:
-        result = svc.extract_entities(payload.text)
+        mentions = ib_svc.predict_merged(payload.text)
     except (TypeError, ValueError) as exc:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)
         )
+    model_type = "hybrid_baseline+indicbert_ner" if any(
+        m.method == "indicbert_ner" for m in mentions
+    ) else "hybrid_baseline"
     return EntitiesResponse(
         entities=[
             EntityResult(
                 text=m.text, label=m.label, start=m.start, end=m.end,
                 method=m.method,
             )
-            for m in result.entities
+            for m in mentions
         ],
-        count=len(result.entities),
-        model=NerModelInfo(name="marathi_legal_baseline_v1", type="hybrid_baseline"),
+        count=len(mentions),
+        model=NerModelInfo(name="marathi_legal_baseline_v1", type=model_type),
     )
 
 
@@ -114,6 +118,27 @@ def ner_metrics() -> dict:
     if not os.path.exists(path):
         return {"available": False,
                 "reason": "No trained NER metrics. Train with training/train_ner.py."}
+    with open(path, encoding="utf-8") as fh:
+        stored = json.load(fh)
+    return {"available": True, **stored}
+
+
+@trained_router.get("/ner-indicbert-status", response_model=dict)
+def ner_indicbert_status() -> dict:
+    return ib_svc.indicbert_ner_status()
+
+
+@trained_router.get("/ner-indicbert-metrics", response_model=dict)
+def ner_indicbert_metrics() -> dict:
+    import json
+    import os
+
+    from app.core.config import settings
+
+    path = os.path.join(settings.model_dir, "ner_indicbert", "ner_metrics.json")
+    if not os.path.exists(path):
+        return {"available": False,
+                "reason": "No IndicBERT NER metrics. Train with training/train_ner_indicbert.py."}
     with open(path, encoding="utf-8") as fh:
         stored = json.load(fh)
     return {"available": True, **stored}

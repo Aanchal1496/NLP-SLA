@@ -37,10 +37,11 @@ def test_trained_metrics_shape():
 
 
 def test_baseline_default_unchanged():
-    # Existing contract: default endpoint stays hybrid_baseline.
+    # Default endpoint serves baseline spans; when IndicBERT NER is trained it
+    # merges them (type "hybrid_baseline+indicbert_ner") instead of replacing.
     para = "दिनांक 12/05/2024 रोजी सुनावणी होईल।"
     body = client.post("/api/v1/predict/entities", json={"text": para}).json()
-    assert body["model"]["type"] == "hybrid_baseline"
+    assert body["model"]["type"] in ("hybrid_baseline", "hybrid_baseline+indicbert_ner")
 
 
 def test_trained_predict_offsets_when_model_present():

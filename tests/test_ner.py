@@ -157,7 +157,7 @@ def test_api_entities_success_and_offsets():
     assert resp.status_code == 200, resp.text
     body = resp.json()
     assert body["count"] == len(body["entities"])
-    assert body["model"]["type"] == "hybrid_baseline"
+    assert body["model"]["type"] in ("hybrid_baseline", "hybrid_baseline+indicbert_ner")
     for ent in body["entities"]:
         assert PARA[ent["start"] : ent["end"]] == ent["text"]
         assert set(ent) == {"text", "label", "start", "end", "method"}

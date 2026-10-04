@@ -14,10 +14,13 @@ from __future__ import annotations
 
 from collections import Counter
 from dataclasses import dataclass, field
+from typing import Any
 
 from app.services import ner as ner_svc
+from app.services import ner_indicbert as ner_ib
 from app.services.intent_classifier import IntentPrediction, ModelUnavailableError
-from app.services.intent_classifier import predict_intent
+from app.services.intent_indicbert import IndicBertIntentPrediction, predict_intent_auto
+from app.services.intent_indicbert import ModelUnavailableError as IndicBertUnavailable
 from app.services.marathi_preprocess import (
     PreprocessOptions,
     PreprocessResult,
@@ -36,8 +39,8 @@ class ClauseAnalysis:
     index: int
     original: str
     clean: str
-    intent: IntentPrediction | None = None
-    entities: list[ner_svc.EntityMention] = field(default_factory=list)
+    intent: Any = None
+    entities: list = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
 
 
@@ -45,8 +48,8 @@ class ClauseAnalysis:
 class CombinedAnalysis:
     original_text: str = ""
     preprocessed: PreprocessResult = field(default_factory=PreprocessResult)
-    intent: IntentPrediction | None = None
-    entities: list[ner_svc.EntityMention] = field(default_factory=list)
+    intent: Any = None
+    entities: list = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
     clauses: list[ClauseAnalysis] = field(default_factory=list)
 
@@ -86,14 +89,14 @@ def analyze_text(
         raise ValueError("Input text must not be empty.")
     preprocessed = preprocess_marathi_text(text, options or PreprocessOptions())
     warnings: list[str] = []
-    intent: IntentPrediction | None = None
+    intent: IntentPrediction | IndicBertIntentPrediction | None = None
     try:
-        intent = predict_intent(text)
+        intent = predict_intent_auto(text)
         if intent.low_confidence:
             warnings.append(WARNING_LOW_CONFIDENCE)
-    except ModelUnavailableError:
+    except (ModelUnavailableError, IndicBertUnavailable):
         warnings.append(WARNING_INTENT_UNAVAILABLE)
-    entities = ner_svc.extract_entities(text).entities
+    entities = ner_ib.predict_merged(text)
     if not entities:
         warnings.append(WARNING_NO_ENTITIES)
     clauses: list[ClauseAnalysis] = []
@@ -105,16 +108,16 @@ def analyze_text(
             clause_clean = clause_pre.processed_text
         except Exception:
             clause_clean = para
-        clause_intent: IntentPrediction | None = None
+        clause_intent: IntentPrediction | IndicBertIntentPrediction | None = None
         try:
-            clause_intent = predict_intent(para)
+            clause_intent = predict_intent_auto(para)
             if clause_intent.low_confidence:
                 clause_warnings.append(WARNING_LOW_CONFIDENCE)
-        except ModelUnavailableError:
+        except (ModelUnavailableError, IndicBertUnavailable):
             clause_warnings.append(WARNING_INTENT_UNAVAILABLE)
         except Exception:
             clause_warnings.append(WARNING_INTENT_UNAVAILABLE)
-        clause_entities = ner_svc.extract_entities(para).entities
+        clause_entities = ner_ib.predict_merged(para)
         if not clause_entities:
             clause_warnings.append(WARNING_NO_ENTITIES)
         clauses.append(ClauseAnalysis(
