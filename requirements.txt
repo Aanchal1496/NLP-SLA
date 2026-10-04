@@ -13,3 +13,7 @@ pandas==3.0.3  # training dataset loading/validation
 joblib==1.5.3  # model artifact persistence
 scipy==1.18.0  # scikit-learn dependency
 spacy==3.8.14  # NER training/inference (blank xx pipeline, no download needed)
+torch==2.14.0  # IndicBERT fine-tuning + inference (CPU build here; CUDA build works with same code)
+transformers==5.12.1  # ai4bharat/indic-bert sequence + token classification
+huggingface-hub==1.20.1  # HF model download for indic-bert
+tokenizers==0.22.2  # transformers dependency (offset mappings for NER BIO)

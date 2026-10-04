@@ -19,6 +19,12 @@ class Settings(BaseSettings):
         "http://localhost:5173",
         "http://127.0.0.1:5173",
     ]
+    # IndicBERT (HuggingFace) model locations. Training scripts default to
+    # these; inference prefers IndicBERT when artifacts exist and falls back
+    # to TF-IDF/baseline otherwise.
+    indicbert_model_name: str = "l3cube-pune/marathi-bert-v2"
+    indicbert_intent_dir: str = "models/indicbert_intent"
+    indicbert_ner_dir: str = "models/ner_indicbert"
     # GROQ (OpenAI-compatible) translation: Marathi -> English.
     # Set NLP_GROQ_API_KEY in .env (never commit .env). Empty => /translate
     # returns {available: false} and analysis still works.

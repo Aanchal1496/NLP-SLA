@@ -12,7 +12,7 @@ FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
 # Bump when shipping user-visible backend features. The dashboard compares
 # this against its own EXPECTED_BUILD and tells the user to restart/refresh
 # on mismatch instead of failing silently with stale code.
-BUILD = "1.4"
+BUILD = "1.5"
 
 
 def create_app() -> FastAPI:
@@ -51,8 +51,9 @@ def create_app() -> FastAPI:
     @app.get("/version", tags=["health"])
     def version() -> dict[str, object]:
         return {"build": BUILD,
-                "features": ["clauses", "clean-text", "groq-translate",
-                             "spacy-silver-ner", "light-theme"]}
+                 "features": ["clauses", "clean-text", "groq-translate",
+                              "spacy-silver-ner", "indicbert-intent",
+                              "indicbert-ner", "light-theme"]}
 
     return app
 

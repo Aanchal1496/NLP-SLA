@@ -20,7 +20,7 @@
   // Must match BUILD in app/main.py. Shown in the header; on mismatch the
   // dashboard tells the user to restart + hard-refresh instead of silently
   // running stale backend/frontend code.
-  var EXPECTED_BUILD = '1.4';
+  var EXPECTED_BUILD = '1.5';
 
   function $(id) {
     if (typeof document.getElementById !== 'function') return null;
@@ -666,10 +666,30 @@
 
   async function loadMetrics() {
     var data = null;
+    // Prefer IndicBERT metrics when a fine-tuned model exists; the legacy
+    // TF-IDF metrics stay as fallback (and as the only source pre-training).
     try {
-      var res = await fetch(API_BASE + '/api/v1/model/metrics');
-      data = await res.json();
+      var ibRes = await fetch(API_BASE + '/api/v1/model/intent-indicbert-metrics');
+      var ib = await ibRes.json();
+      if (ib && ib.available) {
+        data = {
+          available: true,
+          selected_model: 'indicbert:' + (ib.base_model || 'marathi-bert'),
+          results: {
+            'indicbert': {
+              macro_f1: ib.macro_f1 || 0,
+              accuracy: ib.accuracy || 0
+            }
+          }
+        };
+      }
     } catch (e) { data = null; }
+    if (!data || !data.available) {
+      try {
+        var res = await fetch(API_BASE + '/api/v1/model/metrics');
+        data = await res.json();
+      } catch (e) { data = null; }
+    }
     function setText(id, text) {
       var el = $(id);
       if (el) el.textContent = text;
